@@ -11,6 +11,7 @@ interface CarouselPreviewProps {
   onSelectSlide: (index: number) => void;
   onUpdateSlide: (index: number, field: string, value: string) => void;
   isEditing: boolean;
+  brandColors?: { primary: string; secondary: string };
 }
 
 export default function CarouselPreview({
@@ -20,6 +21,7 @@ export default function CarouselPreview({
   onSelectSlide,
   onUpdateSlide,
   isEditing,
+  brandColors,
 }: CarouselPreviewProps) {
   // Handle keyboard navigation
   useEffect(() => {
@@ -69,6 +71,7 @@ export default function CarouselPreview({
           isEditing={isEditing}
           onUpdate={(field, value) => onUpdateSlide(selectedSlideIndex, field, value)}
           slideIndex={selectedSlideIndex}
+          brandColors={brandColors}
         />
 
         {/* Left Arrow Button */}
@@ -197,7 +200,8 @@ export default function CarouselPreview({
                     isSelected={index === selectedSlideIndex}
                     isEditing={false}
                     onUpdate={() => {}}
-                    slideIndex={index}
+                    slideIndex={-1}
+                    brandColors={brandColors}
                   />
                 </div>
               </div>

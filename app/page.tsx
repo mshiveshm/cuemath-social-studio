@@ -47,8 +47,8 @@ export default function Home() {
   const [suggestedCaption, setSuggestedCaption] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [brandColors, setBrandColors] = useState({
-    primary: BRAND.colors.primary,
-    secondary: BRAND.colors.secondary,
+    primary: "#FF6B35",
+    secondary: "#6B4EFF",
   });
   const [showSidebar, setShowSidebar] = useState(true);
   const [showToast, setShowToast] = useState(false);
@@ -77,6 +77,9 @@ export default function Home() {
   ) => {
     setIsGenerating(true);
     setFormat(selectedFormat);
+    
+    // Force slideCount to 1 for post and story formats
+    const actualSlideCount = (selectedFormat === "post" || selectedFormat === "story") ? 1 : slideCount;
 
     try {
       const response = await fetch('/api/generate', {
@@ -85,7 +88,7 @@ export default function Home() {
         body: JSON.stringify({
           idea,
           format: selectedFormat,
-          slideCount,
+          slideCount: actualSlideCount,
         }),
       });
 
@@ -94,7 +97,8 @@ export default function Home() {
       if (response.ok) {
         data = await response.json();
       } else {
-        throw new Error('API error');
+        // API returned non-200, use fallback
+        data = generateFallbackContent(idea, selectedFormat, actualSlideCount);
       }
 
       setSlides(data.slides);
@@ -116,8 +120,9 @@ export default function Home() {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } catch (err) {
+      // Network error or exception, use fallback gracefully
       console.error('Generation error:', err);
-      const data = generateFallbackContent(idea, selectedFormat, slideCount);
+      const data = generateFallbackContent(idea, selectedFormat, actualSlideCount);
 
       setSlides(data.slides);
       setCurrentTitle(data.title);
@@ -214,7 +219,9 @@ export default function Home() {
               slideCount={slides.length}
               format={format}
               title={currentTitle}
-              selectedSlideIndex={selectedSlideIndex}
+              slides={slides}
+              onSlideChange={setSelectedSlideIndex}
+              currentSlideIndex={selectedSlideIndex}
             />
           )}
           <button
@@ -275,6 +282,7 @@ export default function Home() {
                 onSelectSlide={setSelectedSlideIndex}
                 onUpdateSlide={handleUpdateSlide}
                 isEditing={isEditing}
+                brandColors={brandColors}
               />
             </div>
           )}

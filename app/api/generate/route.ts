@@ -39,79 +39,81 @@ export async function POST(request: NextRequest) {
 
     const { idea, format, slideCount } = body;
 
-    // Validate API key
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("GEMINI_API_KEY environment variable is not set");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
     // Initialize Gemini
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // Build detailed prompt
-    const prompt = `You are a Cuemath social media content generator designed to create engaging, educational content for parents about their children's learning journey.
+    const prompt = `You are a social media content creator for Cuemath, an ed-tech brand for children aged 6-16. Create content for parents.
 
-Generate a ${format} social media post with ${slideCount} slides based on this idea: "${idea}"
+Return ONLY a JSON object. No markdown. No backticks. No explanation. Start with { and end with }.
 
-IMPORTANT: Return ONLY valid JSON (no markdown, no code blocks, no explanation).
+Create ${slideCount} slides for this idea: ${idea}
+Format type: ${format}
 
-The JSON structure must be:
-{
-  "title": "string - compelling post title",
-  "slides": [
-    {
-      "slideNumber": number,
-      "headline": "string - max 8 words, punchy and engaging",
-      "subtext": "string - max 30 words, warm and encouraging tone directed at parents",
-      "callToAction": "string or null - only include on the last slide, encouraging them to learn more",
-      "icon": "string - relevant lucide icon name (e.g., Heart, Brain, Lightbulb, TrendingUp, etc.)",
-      "layoutStyle": "string - one of: center, split, iconTop, bigText",
-      "gradientStyle": "string - one of: gradient1, gradient2, gradient3, gradient4, gradient5, gradient6"
-    }
-  ],
-  "hashtags": ["array of 5 relevant hashtags including #Cuemath"],
-  "suggestedCaption": "string - engaging caption for the post"
-}
+Rules:
+- Slide 1 must be a hook that grabs attention
+- Middle slides build the story  
+- Last slide has a clear takeaway
+- Speak to parents about their children
+- Keep headlines under 8 words
+- Keep subtext under 25 words
+- Use only ASCII characters, no special characters
+- callToAction only on the last slide
 
-STRUCTURE GUIDELINES:
-- Slide 1 (Hook): Grab attention with a surprising fact or common struggle
-- Middle Slides: Build the narrative, provide actionable insights for parents
-- Last Slide: Powerful takeaway with clear call-to-action encouraging parents to support their child's learning
+JSON structure to return:
+{"title":"string","slides":[{"slideNumber":1,"headline":"string","subtext":"string","callToAction":null,"icon":"Star","layoutStyle":"center","gradientStyle":"gradient1"}],"hashtags":["#Cuemath"],"suggestedCaption":"string"}
 
-TONE: Warm, encouraging, educational, parent-focused, emphasizing growth and learning potential.
-
-Generate the JSON now:`;
+Valid icon values: Star, Brain, Zap, Heart, BookOpen, Trophy, Target, Lightbulb, Users, TrendingUp, Clock, Shield
+Valid layoutStyle values: center, split, iconTop, bigText
+Valid gradientStyle values: gradient1, gradient2, gradient3, gradient4, gradient5, gradient6
+Last slide must have callToAction as a string not null.
+Only last slide has callToAction, all others must have callToAction set to null.`;
 
     // Call Gemini API
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
+    
 
-    // Parse JSON from response - strip markdown code blocks if present
-    let jsonString = responseText.trim();
+    let jsonString = responseText;
 
-    // Remove markdown code blocks if present
-    if (jsonString.startsWith("```json")) {
-      jsonString = jsonString.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-    } else if (jsonString.startsWith("```")) {
-      jsonString = jsonString.replace(/^```\n?/, "").replace(/\n?```$/, "");
+    // Remove markdown
+    jsonString = jsonString.replace(/```json/gi, "").replace(/```/gi, "").trim();
+
+    // Extract JSON object
+    const firstBrace = jsonString.indexOf("{");
+    const lastBrace = jsonString.lastIndexOf("}");
+    if (firstBrace === -1 || lastBrace === -1) {
+      throw new Error("No JSON found in response");
+    }
+    jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+
+    // Fix trailing commas
+    jsonString = jsonString.replace(/,(\s*[}\]])/g, "$1");
+
+    // Remove actual newlines inside string values (replace with space)
+    jsonString = jsonString.replace(/(?<=":.*)\n(?=.*")/g, " ");
+
+    // Replace smart quotes with regular quotes
+    jsonString = jsonString.replace(/[\u2018\u2019]/g, "'");
+    jsonString = jsonString.replace(/[\u201C\u201D]/g, '"');
+
+    // Remove control characters
+    jsonString = jsonString.replace(/[\x00-\x1F\x7F]/g, (match) => {
+      if (match === '\n' || match === '\r' || match === '\t') return ' ';
+      return '';
+    });
+
+    let generatedContent;
+    try {
+      generatedContent = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error("JSON parse failed, string was:", jsonString.substring(0, 500));
+      throw new Error("Failed to parse Gemini response as JSON");
     }
 
-    // Parse the JSON
-    const generatedContent: GenerateResponse = JSON.parse(jsonString);
-
-    // Validate the response structure
-    if (
-      !generatedContent.title ||
-      !Array.isArray(generatedContent.slides) ||
-      !Array.isArray(generatedContent.hashtags) ||
-      !generatedContent.suggestedCaption
-    ) {
-      throw new Error("Invalid response structure from Gemini");
+    if (!generatedContent.slides || !Array.isArray(generatedContent.slides)) {
+      throw new Error("Invalid response - no slides array");
     }
 
     // Return the generated content

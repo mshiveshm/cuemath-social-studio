@@ -1,214 +1,365 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Download, Image, FileText, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { Download, Image, FileText, Images, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface ExportButtonProps {
   slideCount: number;
   format: string;
   title: string;
-  selectedSlideIndex?: number;
+  slides: any[];
+  onSlideChange: (index: number) => void;
+  currentSlideIndex: number;
 }
 
 export default function ExportButton({
   slideCount,
   format,
   title,
-  selectedSlideIndex = 0,
+  slides,
+  onSlideChange,
+  currentSlideIndex,
 }: ExportButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
       }
     };
 
-    if (isOpen) {
+    if (showDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showDropdown]);
+
+  // Capture the current slide
+  const captureCurrentSlide = async (): Promise<HTMLCanvasElement | null> => {
+    await new Promise((r) => setTimeout(r, 300));
+
+    const element = document.getElementById(`slide-${currentSlideIndex}`);
+    if (!element) {
+      console.error(`Slide element not found: slide-${currentSlideIndex}`);
+      return null;
     }
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const downloadCurrentSlide = async () => {
-    setIsExporting(true);
     try {
-      const slideElement = document.getElementById(`slide-${selectedSlideIndex}`);
-      if (!slideElement) {
-        console.error(
-          `Slide element with id slide-${selectedSlideIndex} not found`
-        );
-        alert('Could not find slide to export');
-        return;
-      }
-
-      const canvas = await html2canvas(slideElement, {
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false,
+        width: element.offsetWidth,
+        height: element.offsetHeight,
       });
-
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      const timestamp = Date.now();
-      link.download = `cuemath-slide-${selectedSlideIndex + 1}-${timestamp}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Error downloading slide:', error);
-      alert('Failed to download slide');
-    } finally {
-      setIsExporting(false);
-      setIsOpen(false);
+      return canvas;
+    } catch (err) {
+      console.error('Error capturing slide:', err);
+      return null;
     }
   };
 
+  // Download the current slide as PNG
+  const downloadCurrentSlide = async () => {
+    setIsExporting(true);
+    try {
+      const canvas = await captureCurrentSlide();
+      if (canvas) {
+        const link = document.createElement('a');
+        link.download = `cuemath-slide-${currentSlideIndex + 1}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+    } catch (err) {
+      console.error('Error downloading slide:', err);
+    } finally {
+      setIsExporting(false);
+      setShowDropdown(false);
+    }
+  };
+
+  // Download all slides as PDF
   const downloadAllAsPDF = async () => {
     setIsExporting(true);
     try {
       const { jsPDF } = await import('jspdf');
 
-      let pageFormat: [number, number] | string = 'a5';
-      if (format === 'story') {
-        pageFormat = [400, 711];
-      } else if (format === 'post') {
-        pageFormat = [400, 400];
-      }
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: pageFormat,
-      });
+      let pdf: any = null;
 
       for (let i = 0; i < slideCount; i++) {
-        const slideElement = document.getElementById(`slide-${i}`);
-        if (!slideElement) continue;
+        // Navigate to slide
+        onSlideChange(i);
+        setExportProgress('Processing slide ' + (i + 1) + ' of ' + slideCount + '...');
 
-        const canvas = await html2canvas(slideElement, {
+        // Wait for slide to render
+        await new Promise((r) => setTimeout(r, 1000));
+
+        // Find the slide element
+        const element = document.getElementById('slide-' + i);
+        if (!element) continue;
+
+        // Capture with html2canvas
+        const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          logging: false,
         });
 
-        const imgData = canvas.toDataURL('image/png');
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
+        // Get exact dimensions from canvas
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
 
-        if (i > 0) {
-          pdf.addPage([pageWidth, pageHeight], 'portrait');
+        // Create PDF on first slide using exact canvas dimensions
+        if (pdf === null) {
+          pdf = new jsPDF({
+            orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [imgWidth, imgHeight],
+            hotfixes: ['px_scaling'],
+          });
+        } else {
+          // Add new page with same exact dimensions
+          pdf.addPage([imgWidth, imgHeight], imgWidth > imgHeight ? 'landscape' : 'portrait');
         }
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+        // Add image to fill the entire page exactly
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
       }
 
-      const timestamp = Date.now();
-      pdf.save(`cuemath-carousel-${timestamp}.pdf`);
+      if (pdf) {
+        pdf.save('cuemath-carousel-' + Date.now() + '.pdf');
+      }
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      alert('Failed to download PDF');
+      console.error('PDF export error:', error);
     } finally {
+      setExportProgress('');
       setIsExporting(false);
-      setIsOpen(false);
     }
   };
 
+  // Download all slides as individual PNGs
   const downloadAllAsPNGs = async () => {
     setIsExporting(true);
     try {
-      for (let i = 0; i < slideCount; i++) {
-        const slideElement = document.getElementById(`slide-${i}`);
-        if (!slideElement) continue;
+      for (let i =0; i < slideCount; i++) {
+        // Step 1: Navigate to slide
+        onSlideChange(i);
+        setExportProgress('Exporting slide ' + (i + 1) + ' of ' + slideCount + '...');
 
-        const canvas = await html2canvas(slideElement, {
+        // Step 2: Wait longer for DOM to fully re-render
+        await new Promise((r) => setTimeout(r, 1200));
+
+        // Step 3: Find element
+        const element = document.getElementById('slide-' + i);
+        if (!element) {
+          console.log('Element not found for slide', i);
+          continue;
+        }
+
+        // Step 4: Capture
+        const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          logging: false,
         });
 
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        const timestamp = Date.now();
-        link.download = `cuemath-slide-${i + 1}-${timestamp}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Step 5: Convert to blob and use blob URL for download
+        // This is more reliable than dataURL for multiple downloads
+        await new Promise<void>((resolve) => {
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              resolve();
+              return;
+            }
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = 'cuemath-slide-' + (i + 1) + '-' + Date.now() + '.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-        // Wait 500ms between downloads
-        if (i < slideCount - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
+            // Revoke blob URL after short delay
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+            resolve();
+          }, 'image/png');
+        });
+
+        // Step 6: Wait between downloads to prevent browser blocking
+        await new Promise((r) => setTimeout(r, 1500));
       }
     } catch (error) {
-      console.error('Error downloading slides:', error);
-      alert('Failed to download slides');
+      console.error('PNG export error:', error);
     } finally {
+      // Navigate back to slide 1 after done
+      onSlideChange(0);
+      setExportProgress('');
       setIsExporting(false);
-      setIsOpen(false);
     }
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div style={{ position: 'relative' }} ref={dropdownRef}>
+      {/* Main Button */}
       <button
-        onClick={() => !isExporting && setIsOpen(!isOpen)}
+        onClick={() => setShowDropdown(!showDropdown)}
         disabled={isExporting}
-        className={cn(
-          'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200',
-          'bg-gradient-to-r from-[#FF6B35] to-[#6B4EFF]',
-          isExporting && 'opacity-50 cursor-not-allowed'
-        )}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 16px',
+          borderRadius: '8px',
+          border: '1px solid rgba(255,107,53,0.4)',
+          background: 'rgba(255,107,53,0.1)',
+          color: '#FF6B35',
+          cursor: isExporting ? 'not-allowed' : 'pointer',
+          fontSize: '13px',
+          fontWeight: '600',
+          position: 'relative',
+          transition: 'all 0.2s',
+          opacity: isExporting ? 0.6 : 1,
+        }}
       >
         {isExporting ? (
           <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Exporting...
+            <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+            <span>{exportProgress || 'Exporting...'}</span>
           </>
         ) : (
           <>
-            <Download className="w-5 h-5" />
-            Export
+            <Download size={16} />
+            <span>Export</span>
           </>
         )}
       </button>
 
-      {isOpen && !isExporting && (
-        <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
+      {/* Dropdown Menu */}
+      {showDropdown && !isExporting && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: '8px',
+            background: '#1E1E2E',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            padding: '8px',
+            minWidth: '220px',
+            zIndex: 100,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          }}
+        >
+          {/* Download This Slide */}
           <button
             onClick={downloadCurrentSlide}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-gray-800 transition-colors border-b border-gray-700"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: 'white',
+              border: 'none',
+              background: 'none',
+              width: '100%',
+              textAlign: 'left',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'none';
+            }}
           >
-            <Image className="w-4 h-4 text-orange-500 flex-shrink-0" />
-            <span className="text-sm">Download Current Slide (PNG)</span>
+            <Image size={16} />
+            <span>Download This Slide (PNG)</span>
           </button>
 
+          {/* Download All as PDF */}
           <button
             onClick={downloadAllAsPDF}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-gray-800 transition-colors border-b border-gray-700"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: 'white',
+              border: 'none',
+              background: 'none',
+              width: '100%',
+              textAlign: 'left',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'none';
+            }}
           >
-            <FileText className="w-4 h-4 text-orange-500 flex-shrink-0" />
-            <span className="text-sm">Download All Slides (PDF)</span>
+            <FileText size={16} />
+            <span>Download All as PDF</span>
           </button>
 
+          {/* Download All as PNGs */}
           <button
             onClick={downloadAllAsPNGs}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-gray-800 transition-colors"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: 'white',
+              border: 'none',
+              background: 'none',
+              width: '100%',
+              textAlign: 'left',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'none';
+            }}
           >
-            <Images className="w-4 h-4 text-orange-500 flex-shrink-0" />
-            <span className="text-sm">Download All as PNGs</span>
+            <Image size={16} />
+            <span>Download All as PNGs</span>
           </button>
         </div>
       )}
+
+      {/* Style for spinning loader */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

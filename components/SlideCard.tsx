@@ -33,6 +33,7 @@ interface SlideCardProps {
   isEditing: boolean;
   onUpdate: (field: string, value: string) => void;
   slideIndex: number;
+  brandColors?: { primary: string; secondary: string };
 }
 
 const gradientMap: Record<string, string> = {
@@ -66,6 +67,7 @@ export default function SlideCard({
   isEditing,
   onUpdate,
   slideIndex,
+  brandColors,
 }: SlideCardProps) {
   const aspectRatioMap: Record<string, string> = {
     carousel: '125%',
@@ -83,10 +85,13 @@ export default function SlideCard({
       case 'center':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, textAlign: 'center', gap: '16px' }}>
-            <IconComponent size={48} color="rgba(255,255,255,0.9)" />
+            <div style={{ filter: `drop-shadow(0 0 8px ${brandColors?.secondary || '#6B4EFF'})` }}>
+              <IconComponent size={48} color="white" />
+            </div>
             {isEditing ? (
               <div
                 contentEditable
+                suppressContentEditableWarning={true}
                 onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
                 style={{
                   fontSize: '22px',
@@ -109,6 +114,7 @@ export default function SlideCard({
             {isEditing ? (
               <div
                 contentEditable
+                suppressContentEditableWarning={true}
                 onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
                 style={{
                   fontSize: '13px',
@@ -137,6 +143,7 @@ export default function SlideCard({
             {isEditing ? (
               <div
                 contentEditable
+                suppressContentEditableWarning={true}
                 onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
                 style={{
                   fontSize: '32px',
@@ -159,6 +166,7 @@ export default function SlideCard({
             {isEditing ? (
               <div
                 contentEditable
+                suppressContentEditableWarning={true}
                 onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
                 style={{
                   fontSize: '12px',
@@ -183,10 +191,13 @@ export default function SlideCard({
       case 'iconTop':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flex: 1, gap: '12px' }}>
-            <IconComponent size={40} color="white" />
+            <div style={{ filter: `drop-shadow(0 0 8px ${brandColors?.secondary || '#6B4EFF'})` }}>
+              <IconComponent size={40} color="white" />
+            </div>
             {isEditing ? (
               <div
                 contentEditable
+                suppressContentEditableWarning={true}
                 onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
                 style={{
                   fontSize: '20px',
@@ -209,6 +220,7 @@ export default function SlideCard({
             {isEditing ? (
               <div
                 contentEditable
+                suppressContentEditableWarning={true}
                 onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
                 style={{
                   fontSize: '12px',
@@ -237,6 +249,7 @@ export default function SlideCard({
               {isEditing ? (
                 <div
                   contentEditable
+                  suppressContentEditableWarning={true}
                   onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
                   style={{
                     fontSize: '20px',
@@ -259,6 +272,7 @@ export default function SlideCard({
               {isEditing ? (
                 <div
                   contentEditable
+                  suppressContentEditableWarning={true}
                   onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
                   style={{
                     fontSize: '12px',
@@ -277,7 +291,9 @@ export default function SlideCard({
                 </div>
               )}
             </div>
-            <IconComponent size={56} color="rgba(255,255,255,0.8)" />
+            <div style={{ filter: `drop-shadow(0 0 8px ${brandColors?.secondary || '#6B4EFF'})` }}>
+              <IconComponent size={56} color="white" />
+            </div>
           </div>
         );
 
@@ -316,7 +332,7 @@ export default function SlideCard({
       >
         {/* Top Row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'auto' }}>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.1em' }}>
+          <div style={{ fontSize: '12px', color: brandColors?.primary || 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.1em' }}>
             {String(slide.slideNumber).padStart(2, '0')}
           </div>
           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: '0.05em' }}>
@@ -333,14 +349,14 @@ export default function SlideCard({
             <div
               style={{
                 display: 'inline-block',
-                background: 'rgba(255,255,255,0.2)',
+                background: brandColors?.primary ? brandColors.primary + '33' : 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(8px)',
                 color: 'white',
                 padding: '8px 16px',
                 borderRadius: '50px',
                 fontSize: '11px',
                 fontWeight: 600,
-                border: '1px solid rgba(255,255,255,0.3)',
+                border: '1px solid ' + (brandColors?.primary || 'rgba(255,255,255,0.3)'),
               }}
             >
               {slide.callToAction}
@@ -350,9 +366,9 @@ export default function SlideCard({
 
         {/* Decorative Dots */}
         <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: brandColors?.primary || 'rgba(255,255,255,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: brandColors?.primary || 'rgba(255,255,255,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: brandColors?.primary || 'rgba(255,255,255,0.4)' }} />
         </div>
       </div>
     </div>
