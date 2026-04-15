@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
   Brain,
   Star,
@@ -14,13 +15,12 @@ import {
   Clock,
   Shield,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface Slide {
   slideNumber: number;
   headline: string;
   subtext: string;
-  callToAction?: string | null;
+  callToAction: string | null;
   layoutStyle: string;
   gradientStyle: string;
   icon: string;
@@ -35,7 +35,16 @@ interface SlideCardProps {
   slideIndex: number;
 }
 
-const iconMap: Record<string, typeof Star> = {
+const gradientMap: Record<string, string> = {
+  gradient1: 'linear-gradient(135deg, #FF6B35 0%, #7C3AED 100%)',
+  gradient2: 'linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)',
+  gradient3: 'linear-gradient(135deg, #FB923C 0%, #DB2777 100%)',
+  gradient4: 'linear-gradient(135deg, #1E1B4B 0%, #0F172A 100%)',
+  gradient5: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
+  gradient6: 'linear-gradient(135deg, #FCD34D 0%, #F97316 100%)',
+};
+
+const iconMap: Record<string, React.ComponentType<any>> = {
   Brain,
   Star,
   Zap,
@@ -50,28 +59,6 @@ const iconMap: Record<string, typeof Star> = {
   Shield,
 };
 
-const gradientMap: Record<string, string> = {
-  gradient1: 'bg-gradient-to-br from-orange-500 to-purple-600',
-  gradient2: 'bg-gradient-to-br from-purple-600 to-blue-600',
-  gradient3: 'bg-gradient-to-br from-orange-400 to-pink-600',
-  gradient4: 'bg-gradient-to-br from-slate-800 to-slate-900',
-  gradient5: 'bg-gradient-to-br from-blue-600 to-purple-700',
-  gradient6: 'bg-gradient-to-br from-orange-300 to-orange-600',
-};
-
-const aspectRatioMap: Record<string, string> = {
-  carousel: 'aspect-[4/5]',
-  post: 'aspect-square',
-  story: 'aspect-[9/16]',
-};
-
-const layoutMap: Record<string, string> = {
-  center: 'flex flex-col items-center justify-center text-center p-8',
-  split: 'flex flex-row items-center gap-4 p-6 text-left',
-  iconTop: 'flex flex-col items-center gap-3 p-8',
-  bigText: 'flex flex-col justify-end p-8',
-};
-
 export default function SlideCard({
   slide,
   format,
@@ -80,120 +67,293 @@ export default function SlideCard({
   onUpdate,
   slideIndex,
 }: SlideCardProps) {
+  const aspectRatioMap: Record<string, string> = {
+    carousel: '125%',
+    post: '100%',
+    story: '177.78%',
+  };
+
+  const aspectRatio = aspectRatioMap[format] || '125%';
+
   const IconComponent = iconMap[slide.icon] || Star;
-  const gradientClass = gradientMap[slide.gradientStyle] || gradientMap.gradient1;
-  const aspectRatioClass = aspectRatioMap[format] || aspectRatioMap.carousel;
-  const layoutClass = layoutMap[slide.layoutStyle] || layoutMap.center;
+  const gradientStyle = gradientMap[slide.gradientStyle] || gradientMap.gradient1;
+
+  const renderContent = () => {
+    switch (slide.layoutStyle) {
+      case 'center':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, textAlign: 'center', gap: '16px' }}>
+            <IconComponent size={48} color="rgba(255,255,255,0.9)" />
+            {isEditing ? (
+              <div
+                contentEditable
+                onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 800,
+                  color: 'white',
+                  lineHeight: 1.2,
+                  outline: 'none',
+                  cursor: 'text',
+                  borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                  padding: '4px',
+                }}
+              >
+                {slide.headline}
+              </div>
+            ) : (
+              <div style={{ fontSize: '22px', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>
+                {slide.headline}
+              </div>
+            )}
+            {isEditing ? (
+              <div
+                contentEditable
+                onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
+                style={{
+                  fontSize: '13px',
+                  color: 'rgba(255,255,255,0.8)',
+                  lineHeight: 1.5,
+                  maxWidth: '80%',
+                  outline: 'none',
+                  cursor: 'text',
+                  borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                  padding: '4px',
+                }}
+              >
+                {slide.subtext}
+              </div>
+            ) : (
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, maxWidth: '80%' }}>
+                {slide.subtext}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'bigText':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', flex: 1, gap: '12px' }}>
+            {isEditing ? (
+              <div
+                contentEditable
+                onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
+                style={{
+                  fontSize: '32px',
+                  fontWeight: 900,
+                  color: 'white',
+                  lineHeight: 1.1,
+                  outline: 'none',
+                  cursor: 'text',
+                  borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                  padding: '4px',
+                }}
+              >
+                {slide.headline}
+              </div>
+            ) : (
+              <div style={{ fontSize: '32px', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>
+                {slide.headline}
+              </div>
+            )}
+            {isEditing ? (
+              <div
+                contentEditable
+                onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.75)',
+                  lineHeight: 1.5,
+                  outline: 'none',
+                  cursor: 'text',
+                  borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                  padding: '4px',
+                }}
+              >
+                {slide.subtext}
+              </div>
+            ) : (
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
+                {slide.subtext}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'iconTop':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flex: 1, gap: '12px' }}>
+            <IconComponent size={40} color="white" />
+            {isEditing ? (
+              <div
+                contentEditable
+                onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 800,
+                  color: 'white',
+                  lineHeight: 1.2,
+                  outline: 'none',
+                  cursor: 'text',
+                  borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                  padding: '4px',
+                }}
+              >
+                {slide.headline}
+              </div>
+            ) : (
+              <div style={{ fontSize: '20px', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>
+                {slide.headline}
+              </div>
+            )}
+            {isEditing ? (
+              <div
+                contentEditable
+                onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.8)',
+                  lineHeight: 1.5,
+                  outline: 'none',
+                  cursor: 'text',
+                  borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                  padding: '4px',
+                }}
+              >
+                {slide.subtext}
+              </div>
+            ) : (
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
+                {slide.subtext}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'split':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 1, gap: '16px' }}>
+            <div style={{ flex: 1 }}>
+              {isEditing ? (
+                <div
+                  contentEditable
+                  onBlur={(e) => onUpdate('headline', e.currentTarget.textContent || '')}
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    color: 'white',
+                    outline: 'none',
+                    cursor: 'text',
+                    borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                    padding: '4px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {slide.headline}
+                </div>
+              ) : (
+                <div style={{ fontSize: '20px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>
+                  {slide.headline}
+                </div>
+              )}
+              {isEditing ? (
+                <div
+                  contentEditable
+                  onBlur={(e) => onUpdate('subtext', e.currentTarget.textContent || '')}
+                  style={{
+                    fontSize: '12px',
+                    color: 'rgba(255,255,255,0.8)',
+                    outline: 'none',
+                    cursor: 'text',
+                    borderBottom: '1px dashed rgba(255,255,255,0.4)',
+                    padding: '4px',
+                  }}
+                >
+                  {slide.subtext}
+                </div>
+              ) : (
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>
+                  {slide.subtext}
+                </div>
+              )}
+            </div>
+            <IconComponent size={56} color="rgba(255,255,255,0.8)" />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
-      id={`slide-${slideIndex}`}
-      className={cn(
-        'relative rounded-lg overflow-hidden shadow-xl',
-        aspectRatioClass,
-        gradientClass,
-        isSelected && 'ring-4 ring-[#FF6B35]'
-      )}
+      style={{
+        position: 'relative',
+        width: '100%',
+        paddingBottom: aspectRatio,
+        borderRadius: '16px',
+        overflow: 'hidden',
+        border: isSelected ? '3px solid #FF6B35' : '3px solid transparent',
+        cursor: 'pointer',
+        boxShadow: isSelected ? '0 0 0 2px rgba(255,107,53,0.3)' : '0 4px 24px rgba(0,0,0,0.4)',
+      }}
     >
-      {/* Overlay pattern for depth */}
-      <div className="absolute inset-0 bg-white opacity-5 pointer-events-none"></div>
-
-      {/* Slide number indicator - top left */}
-      <div className="absolute top-4 left-4 text-white text-xs font-bold opacity-70">
-        {String(slide.slideNumber).padStart(2, '0')}
-      </div>
-
-      {/* Cuemath logo - top right */}
-      <div className="absolute top-4 right-4 text-white text-xs font-bold opacity-70">
-        Cuemath
-      </div>
-
-      {/* Main content area */}
-      <div className={cn('w-full h-full flex', layoutClass)}>
-        {/* Icon section */}
-        {slide.layoutStyle !== 'split' && (
-          <div className="flex-shrink-0">
-            <IconComponent className="w-12 h-12 text-white" />
+      <div
+        id={`slide-${slideIndex}`}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: gradientStyle,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px',
+          fontFamily: 'Inter, sans-serif',
+        }}
+      >
+        {/* Top Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'auto' }}>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.1em' }}>
+            {String(slide.slideNumber).padStart(2, '0')}
           </div>
-        )}
-
-        {/* Split layout icon on left */}
-        {slide.layoutStyle === 'split' && (
-          <div className="flex-shrink-0">
-            <IconComponent className="w-12 h-12 text-white" />
+          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: '0.05em' }}>
+            Cuemath
           </div>
-        )}
+        </div>
 
-        {/* Text content */}
-        <div className={cn('w-full', slide.layoutStyle === 'split' && 'flex-1')}>
-          {/* Headline */}
-          {isEditing ? (
+        {/* Middle Content */}
+        {renderContent()}
+
+        {/* Bottom Row - Call to Action */}
+        {slide.callToAction && (
+          <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
             <div
-              contentEditable
-              onInput={(e) =>
-                onUpdate('headline', e.currentTarget.textContent || '')
-              }
-              className={cn(
-                'font-bold text-white outline-none focus:bg-white/10 rounded px-1 py-0.5 mb-2 break-words',
-                slide.layoutStyle === 'bigText'
-                  ? 'text-4xl leading-tight'
-                  : 'text-2xl'
-              )}
-              suppressContentEditableWarning
+              style={{
+                display: 'inline-block',
+                background: 'rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(8px)',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '50px',
+                fontSize: '11px',
+                fontWeight: 600,
+                border: '1px solid rgba(255,255,255,0.3)',
+              }}
             >
-              {slide.headline}
-            </div>
-          ) : (
-            <h2
-              className={cn(
-                'font-bold text-white mb-2 break-words',
-                slide.layoutStyle === 'bigText'
-                  ? 'text-4xl leading-tight'
-                  : 'text-2xl'
-              )}
-            >
-              {slide.headline}
-            </h2>
-          )}
-
-          {/* Subtext */}
-          {isEditing ? (
-            <div
-              contentEditable
-              onInput={(e) =>
-                onUpdate('subtext', e.currentTarget.textContent || '')
-              }
-              className="text-white/90 text-sm outline-none focus:bg-white/10 rounded px-1 py-0.5 break-words mb-3"
-              suppressContentEditableWarning
-            >
-              {slide.subtext}
-            </div>
-          ) : (
-            <p className="text-white/90 text-sm mb-3 break-words">
-              {slide.subtext}
-            </p>
-          )}
-
-          {/* Call to action */}
-          {slide.callToAction && (
-            <div className="inline-block bg-white text-gray-900 rounded-full px-4 py-2 text-xs font-medium mt-2">
               {slide.callToAction}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {/* Decorative dots at bottom */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className={cn(
-              'w-1.5 h-1.5 rounded-full',
-              i === 0 ? 'bg-white' : 'bg-white/50'
-            )}
-          ></div>
-        ))}
+        {/* Decorative Dots */}
+        <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+        </div>
       </div>
     </div>
   );

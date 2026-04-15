@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, Sparkles } from 'lucide-react';
 
 interface IdeaInputProps {
   onGenerate: (idea: string, format: string, slideCount: number) => void;
@@ -13,6 +12,7 @@ export default function IdeaInput({ onGenerate, isLoading }: IdeaInputProps) {
   const [idea, setIdea] = useState('');
   const [selectedFormat, setSelectedFormat] = useState('carousel');
   const [selectedSlideCount, setSelectedSlideCount] = useState(5);
+  const [textareaFocused, setTextareaFocused] = useState(false);
 
   const formats = [
     { id: 'carousel', label: 'Carousel', ratio: '4:5' },
@@ -24,44 +24,153 @@ export default function IdeaInput({ onGenerate, isLoading }: IdeaInputProps) {
 
   const handleGenerate = () => {
     if (idea.trim().length === 0) {
-      alert('Please describe your content idea');
       return;
     }
     onGenerate(idea, selectedFormat, selectedSlideCount);
   };
 
+  const labelStyle = {
+    fontSize: '11px',
+    fontWeight: 600,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.1em',
+    color: 'rgba(255,255,255,0.4)',
+    marginBottom: '8px',
+    display: 'block',
+  };
+
+  const textareaStyle = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    border: textareaFocused ? '1px solid #FF6B35' : '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    padding: '14px 16px',
+    color: 'white',
+    fontSize: '14px',
+    lineHeight: 1.6,
+    minHeight: '130px',
+    boxSizing: 'border-box' as const,
+    fontFamily: 'inherit',
+    opacity: isLoading ? 0.6 : 1,
+    cursor: isLoading ? 'not-allowed' : 'text',
+    transition: 'border-color 0.2s',
+  };
+
+  const formatButtonsContainerStyle = {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '16px',
+  };
+
+  const formatButtonStyleBase = {
+    flex: 1,
+    padding: '12px 8px',
+    borderRadius: '12px',
+    cursor: isLoading ? 'not-allowed' : 'pointer',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '4px',
+    transition: 'all 0.2s',
+    fontSize: '13px',
+    fontWeight: 500,
+    opacity: isLoading ? 0.6 : 1,
+  };
+
+  const slideCountContainerStyle = {
+    marginTop: '16px',
+  };
+
+  const slideCountRowStyle = {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '8px',
+  };
+
+  const countButtonStyleBase = {
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
+    cursor: isLoading ? 'not-allowed' : 'pointer',
+    fontWeight: 600,
+    fontSize: '15px',
+    transition: 'all 0.2s',
+    opacity: isLoading ? 0.6 : 1,
+  };
+
+  const generateButtonStyle = {
+    width: '100%',
+    padding: '16px',
+    borderRadius: '12px',
+    border: 'none',
+    background: 'linear-gradient(135deg, #FF6B35, #6B4EFF)',
+    color: 'white',
+    fontSize: '15px',
+    fontWeight: 600,
+    cursor: isLoading ? 'not-allowed' : 'pointer',
+    opacity: isLoading ? 0.6 : 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    marginTop: '24px',
+    transition: 'opacity 0.2s',
+  };
+
+  const poweredByStyle = {
+    textAlign: 'center' as const,
+    fontSize: '11px',
+    color: 'rgba(255,255,255,0.25)',
+    marginTop: '12px',
+  };
+
+  const ratioStyle = {
+    fontSize: '10px',
+    opacity: 0.7,
+  };
+
   return (
-    <div className="bg-[#1A1A2E] rounded-xl p-8 max-w-2xl mx-auto">
-      {/* Textarea */}
-      <textarea
-        value={idea}
-        onChange={(e) => setIdea(e.target.value)}
-        placeholder="Describe your content idea... e.g. Carousel for parents about why kids forget what they learn — explain the forgetting curve — end with how spaced repetition fixes it"
-        rows={4}
-        className="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 resize-none"
-        disabled={isLoading}
-      />
+    <div style={{ width: '100%' }}>
+      {/* Your Idea Section */}
+      <div>
+        <label style={labelStyle}>Your Idea</label>
+        <textarea
+          value={idea}
+          onChange={(e) => setIdea(e.target.value)}
+          onFocus={() => setTextareaFocused(true)}
+          onBlur={() => setTextareaFocused(false)}
+          placeholder="Describe your content idea... e.g., carousel about why kids forget what they learn"
+          disabled={isLoading}
+          style={textareaStyle}
+        />
+      </div>
 
       {/* Format Selector */}
-      <div className="mt-6">
-        <label className="text-gray-300 text-sm font-medium block mb-3">
-          Format
-        </label>
-        <div className="grid grid-cols-3 gap-3">
+      <div>
+        <label style={labelStyle}>Format</label>
+        <div style={formatButtonsContainerStyle}>
           {formats.map((format) => (
             <button
               key={format.id}
               onClick={() => setSelectedFormat(format.id)}
               disabled={isLoading}
-              className={cn(
-                'p-4 rounded-lg border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-                selectedFormat === format.id
-                  ? 'bg-[#FF6B35] border-[#FF6B35] text-white'
-                  : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600'
-              )}
+              style={{
+                ...formatButtonStyleBase,
+                ...(selectedFormat === format.id
+                  ? {
+                      border: '1px solid #FF6B35',
+                      background: '#FF6B35',
+                      color: 'white',
+                    }
+                  : {
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.05)',
+                      color: 'rgba(255,255,255,0.6)',
+                    }),
+              }}
             >
-              <div className="font-medium text-sm">{format.label}</div>
-              <div className="text-xs mt-1 opacity-75">{format.ratio}</div>
+              <span>{format.label}</span>
+              <span style={ratioStyle}>{format.ratio}</span>
             </button>
           ))}
         </div>
@@ -69,22 +178,28 @@ export default function IdeaInput({ onGenerate, isLoading }: IdeaInputProps) {
 
       {/* Slide Count Selector (only for carousel) */}
       {selectedFormat === 'carousel' && (
-        <div className="mt-6">
-          <label className="text-gray-300 text-sm font-medium block mb-3">
-            Number of Slides
-          </label>
-          <div className="flex gap-3">
+        <div style={slideCountContainerStyle}>
+          <label style={labelStyle}>Slides</label>
+          <div style={slideCountRowStyle}>
             {slideCountOptions.map((count) => (
               <button
                 key={count}
                 onClick={() => setSelectedSlideCount(count)}
                 disabled={isLoading}
-                className={cn(
-                  'px-6 py-3 rounded-lg border-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed',
-                  selectedSlideCount === count
-                    ? 'bg-[#FF6B35] border-[#FF6B35] text-white'
-                    : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600'
-                )}
+                style={{
+                  ...countButtonStyleBase,
+                  ...(selectedSlideCount === count
+                    ? {
+                        border: '1px solid #FF6B35',
+                        background: '#FF6B35',
+                        color: 'white',
+                      }
+                    : {
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'rgba(255,255,255,0.6)',
+                      }),
+                }}
               >
                 {count}
               </button>
@@ -94,29 +209,34 @@ export default function IdeaInput({ onGenerate, isLoading }: IdeaInputProps) {
       )}
 
       {/* Generate Button */}
-      <button
-        onClick={handleGenerate}
-        disabled={isLoading}
-        className={cn(
-          'w-full mt-8 py-4 rounded-lg font-semibold text-lg text-white transition-all duration-200 flex items-center justify-center gap-2',
-          'bg-gradient-to-r from-[#FF6B35] to-[#6B4EFF]',
-          isLoading && 'opacity-50 cursor-not-allowed'
-        )}
-      >
+      <button onClick={handleGenerate} disabled={isLoading} style={generateButtonStyle}>
         {isLoading ? (
           <>
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
             Generating...
           </>
         ) : (
-          'Generate Creative'
+          <>
+            <Sparkles size={20} />
+            Generate Creative
+          </>
         )}
       </button>
 
-      {/* Hint Text */}
-      <p className="text-center text-gray-500 text-xs mt-4">
-        Powered by Google Gemini AI
-      </p>
+      {/* Powered by text */}
+      <p style={poweredByStyle}>Powered by Google Gemini AI</p>
+
+      {/* Spin animation */}
+      <style>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }

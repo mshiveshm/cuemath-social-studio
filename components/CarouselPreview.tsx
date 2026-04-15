@@ -1,22 +1,11 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import SlideCard from './SlideCard';
 
-interface Slide {
-  slideNumber: number;
-  headline: string;
-  subtext: string;
-  callToAction?: string | null;
-  layoutStyle: string;
-  gradientStyle: string;
-  icon: string;
-}
-
 interface CarouselPreviewProps {
-  slides: Slide[];
+  slides: any[];
   format: string;
   selectedSlideIndex: number;
   onSelectSlide: (index: number) => void;
@@ -32,151 +21,190 @@ export default function CarouselPreview({
   onUpdateSlide,
   isEditing,
 }: CarouselPreviewProps) {
-  const filmstripRef = useRef<HTMLDivElement>(null);
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && selectedSlideIndex > 0) {
+        onSelectSlide(selectedSlideIndex - 1);
+      } else if (e.key === 'ArrowRight' && selectedSlideIndex < slides.length - 1) {
+        onSelectSlide(selectedSlideIndex + 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedSlideIndex, slides.length, onSelectSlide]);
 
   if (slides.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <Sparkles className="w-12 h-12 text-gray-500 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-300 mb-2">
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px',
+          padding: '64px',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: '18px', fontWeight: 600, color: 'white' }}>
           Your creative will appear here
-        </h3>
-        <p className="text-gray-500 text-sm">
+        </div>
+        <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>
           Type an idea and click Generate Creative
-        </p>
+        </div>
       </div>
     );
   }
 
-  const currentSlide = slides[selectedSlideIndex];
-  const isFirstSlide = selectedSlideIndex === 0;
-  const isLastSlide = selectedSlideIndex === slides.length - 1;
-
-  const handlePrevious = () => {
-    if (!isFirstSlide) {
-      onSelectSlide(selectedSlideIndex - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (!isLastSlide) {
-      onSelectSlide(selectedSlideIndex + 1);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') handlePrevious();
-    if (e.key === 'ArrowRight') handleNext();
-  };
-
   return (
-    <div className="w-full" onKeyDown={handleKeyDown} tabIndex={0}>
-      {/* Main Preview Area */}
-      <div className="relative mb-8">
-        {/* Left Arrow */}
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', paddingTop: '32px', overflow: 'visible' }}>
+      {/* Main Slide Display Area */}
+      <div style={{ width: '100%', maxWidth: '360px', position: 'relative' }}>
+        <SlideCard
+          slide={slides[selectedSlideIndex]}
+          format={format}
+          isSelected={false}
+          isEditing={isEditing}
+          onUpdate={(field, value) => onUpdateSlide(selectedSlideIndex, field, value)}
+          slideIndex={selectedSlideIndex}
+        />
+
+        {/* Left Arrow Button */}
         <button
-          onClick={handlePrevious}
-          disabled={isFirstSlide}
-          className={cn(
-            'absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-16 z-10',
-            'w-12 h-12 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors',
-            'flex items-center justify-center',
-            isFirstSlide && 'opacity-30 cursor-not-allowed'
-          )}
-          aria-label="Previous slide"
+          onClick={() => {
+            if (selectedSlideIndex > 0) {
+              onSelectSlide(selectedSlideIndex - 1);
+            }
+          }}
+          style={{
+            position: 'absolute',
+            left: '-52px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            color: 'white',
+            cursor: selectedSlideIndex === 0 ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: selectedSlideIndex === 0 ? 0.3 : 1,
+            transition: 'all 0.2s',
+            padding: 0,
+          }}
         >
-          <ChevronLeft className="w-6 h-6 text-white" />
+          <ChevronLeft size={20} />
         </button>
 
-        {/* Main Slide Display */}
-        <div className="flex justify-center">
-          <div className="max-w-sm w-full">
-            <SlideCard
-              slide={currentSlide}
-              format={format}
-              isSelected={true}
-              isEditing={isEditing}
-              onUpdate={(field, value) =>
-                onUpdateSlide(selectedSlideIndex, field, value)
-              }
-              slideIndex={selectedSlideIndex}
-            />
-          </div>
-        </div>
-
-        {/* Right Arrow */}
+        {/* Right Arrow Button */}
         <button
-          onClick={handleNext}
-          disabled={isLastSlide}
-          className={cn(
-            'absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-16 z-10',
-            'w-12 h-12 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors',
-            'flex items-center justify-center',
-            isLastSlide && 'opacity-30 cursor-not-allowed'
-          )}
-          aria-label="Next slide"
+          onClick={() => {
+            if (selectedSlideIndex < slides.length - 1) {
+              onSelectSlide(selectedSlideIndex + 1);
+            }
+          }}
+          style={{
+            position: 'absolute',
+            right: '-52px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            color: 'white',
+            cursor: selectedSlideIndex === slides.length - 1 ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: selectedSlideIndex === slides.length - 1 ? 0.3 : 1,
+            transition: 'all 0.2s',
+            padding: 0,
+          }}
         >
-          <ChevronRight className="w-6 h-6 text-white" />
+          <ChevronRight size={20} />
         </button>
       </div>
 
       {/* Slide Counter */}
-      <div className="text-center mb-6">
-        <p className="text-gray-400 text-sm">
-          Slide {selectedSlideIndex + 1} of {slides.length}
-        </p>
+      <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
+        Slide {selectedSlideIndex + 1} of {slides.length}
       </div>
 
       {/* Navigation Dots */}
-      <div className="flex justify-center gap-2 mb-8">
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => onSelectSlide(index)}
-            className={cn(
-              'transition-all duration-200 rounded-full',
-              selectedSlideIndex === index
-                ? 'h-2 px-4 bg-[#FF6B35]'
-                : 'h-2 w-2 bg-gray-600 hover:bg-gray-500'
-            )}
-            aria-label={`Go to slide ${index + 1}`}
+            style={
+              index === selectedSlideIndex
+                ? {
+                    width: '24px',
+                    height: '8px',
+                    borderRadius: '4px',
+                    background: '#FF6B35',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                    border: 'none',
+                    padding: 0,
+                  }
+                : {
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.2)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                    border: 'none',
+                    padding: 0,
+                  }
+            }
           />
         ))}
       </div>
 
       {/* Filmstrip */}
-      <div
-        ref={filmstripRef}
-        className="overflow-x-auto pb-4"
-      >
-        <div className="flex gap-4 min-w-min px-4">
-          {slides.map((slide, index) => (
-            <button
-              key={index}
-              onClick={() => onSelectSlide(index)}
-              className={cn(
-                'flex-shrink-0 cursor-pointer transition-all duration-200',
-                selectedSlideIndex === index
-                  ? 'ring-2 ring-[#FF6B35] rounded-lg'
-                  : 'hover:opacity-80'
-              )}
+      <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', padding: '8px 4px', width: '100%', maxWidth: '600px' }}>
+        {slides.map((_, index) => (
+          <div
+            key={index}
+            onClick={() => onSelectSlide(index)}
+            style={{ flexShrink: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
+          >
+            <div
+              style={{
+                width: '80px',
+                height: '100px',
+                border: index === selectedSlideIndex ? '2px solid #FF6B35' : '2px solid transparent',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                position: 'relative',
+                transition: 'all 0.2s',
+              }}
             >
-              <div className="scale-[0.15] origin-top-left pointer-events-none">
-                <SlideCard
-                  slide={slide}
-                  format={format}
-                  isSelected={selectedSlideIndex === index}
-                  isEditing={false}
-                  onUpdate={() => {}}
-                  slideIndex={index}
-                />
+              <div style={{ width: '80px', height: '100px', overflow: 'hidden', borderRadius: '6px', position: 'relative' }}>
+                <div style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', pointerEvents: 'none' }}>
+                  <SlideCard
+                    slide={slides[index]}
+                    format={format}
+                    isSelected={index === selectedSlideIndex}
+                    isEditing={false}
+                    onUpdate={() => {}}
+                    slideIndex={index}
+                  />
+                </div>
               </div>
-              <p className="text-gray-400 text-xs mt-1 text-center">
-                Slide {index + 1}
-              </p>
-            </button>
-          ))}
-        </div>
+            </div>
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>{index + 1}</div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -3,12 +3,11 @@
 import { useState } from 'react';
 import {
   ChevronDown,
+  ChevronUp,
   RefreshCw,
   Copy,
   Lightbulb,
-  Loader2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface Slide {
   slideNumber: number;
@@ -48,13 +47,13 @@ export default function EditPanel({
 }: EditPanelProps) {
   const [openSections, setOpenSections] = useState({
     editSlide: true,
-    regenerate: false,
-    brandColors: false,
-    captionHashtags: false,
+    regenerate: true,
+    colors: false,
+    caption: false,
     tips: false,
   });
 
-  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const currentSlide = slides[selectedSlideIndex];
 
@@ -65,10 +64,10 @@ export default function EditPanel({
     }));
   };
 
-  const handleCopy = (text: string, section: string) => {
+  const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedSection(section);
-    setTimeout(() => setCopiedSection(null), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const tips = [
@@ -78,52 +77,74 @@ export default function EditPanel({
   ];
 
   return (
-    <div className="bg-[#1A1A2E] rounded-lg p-6 space-y-4 max-h-[calc(100vh-150px)] overflow-y-auto">
-      {/* Edit Slide Section */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* SECTION 1 - Edit Slide */}
       {currentSlide && (
-        <div className="border border-gray-700 rounded-lg overflow-hidden">
+        <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
           <button
             onClick={() => toggleSection('editSlide')}
-            className="w-full flex items-center justify-between p-4 bg-gray-900 hover:bg-gray-800 transition-colors"
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '14px 16px',
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+            }}
           >
-            <h3 className="font-semibold text-white">Edit Slide</h3>
-            <ChevronDown
-              className={cn(
-                'w-5 h-5 text-gray-400 transition-transform duration-200',
-                openSections.editSlide && 'transform rotate-180'
-              )}
-            />
+            <span>Edit Slide</span>
+            {openSections.editSlide ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
 
           {openSections.editSlide && (
-            <div className="p-4 bg-gray-950 space-y-4">
+            <div style={{ padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px', display: 'block' }}>
                   Headline
                 </label>
                 <input
                   type="text"
                   value={currentSlide.headline}
-                  onChange={(e) =>
-                    onUpdateSlide(selectedSlideIndex, 'headline', e.target.value)
-                  }
-                  className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
-                  placeholder="Enter headline"
+                  onChange={(e) => onUpdateSlide(selectedSlideIndex, 'headline', e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    color: 'white',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px', display: 'block' }}>
                   Subtext
                 </label>
                 <textarea
                   value={currentSlide.subtext}
-                  onChange={(e) =>
-                    onUpdateSlide(selectedSlideIndex, 'subtext', e.target.value)
-                  }
-                  rows={3}
-                  className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 resize-none"
-                  placeholder="Enter subtext"
+                  onChange={(e) => onUpdateSlide(selectedSlideIndex, 'subtext', e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    color: 'white',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                    minHeight: '80px',
+                    resize: 'none',
+                  }}
                 />
               </div>
             </div>
@@ -131,170 +152,213 @@ export default function EditPanel({
         </div>
       )}
 
-      {/* Regenerate Section */}
-      <div className="border border-gray-700 rounded-lg overflow-hidden">
+      {/* SECTION 2 - Regenerate */}
+      <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
         <button
           onClick={() => toggleSection('regenerate')}
-          className="w-full flex items-center justify-between p-4 bg-gray-900 hover:bg-gray-800 transition-colors"
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '14px 16px',
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 600,
+          }}
         >
-          <h3 className="font-semibold text-white">Regenerate</h3>
-          <ChevronDown
-            className={cn(
-              'w-5 h-5 text-gray-400 transition-transform duration-200',
-              openSections.regenerate && 'transform rotate-180'
-            )}
-          />
+          <span>Regenerate</span>
+          {openSections.regenerate ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
 
         {openSections.regenerate && (
-          <div className="p-4 bg-gray-950">
+          <div style={{ padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
               onClick={() => onRegenerateSlide(selectedSlideIndex)}
               disabled={isRegenerating}
-              className={cn(
-                'w-full py-3 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2',
-                'bg-gradient-to-r from-[#FF6B35] to-[#FF8C42]',
-                isRegenerating && 'opacity-50 cursor-not-allowed'
-              )}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #FF6B35, #6B4EFF)',
+                color: 'white',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: isRegenerating ? 'not-allowed' : 'pointer',
+                opacity: isRegenerating ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
             >
-              {isRegenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Regenerating...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4" />
-                  Regenerate This Slide
-                </>
-              )}
+              <RefreshCw size={16} className={isRegenerating ? 'animate-spin' : ''} />
+              {isRegenerating ? 'Regenerating...' : 'Regenerate This Slide'}
             </button>
           </div>
         )}
       </div>
 
-      {/* Brand Colors Section */}
-      <div className="border border-gray-700 rounded-lg overflow-hidden">
+      {/* SECTION 3 - Brand Colors */}
+      <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
         <button
-          onClick={() => toggleSection('brandColors')}
-          className="w-full flex items-center justify-between p-4 bg-gray-900 hover:bg-gray-800 transition-colors"
+          onClick={() => toggleSection('colors')}
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '14px 16px',
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 600,
+          }}
         >
-          <h3 className="font-semibold text-white">Brand Colors</h3>
-          <ChevronDown
-            className={cn(
-              'w-5 h-5 text-gray-400 transition-transform duration-200',
-              openSections.brandColors && 'transform rotate-180'
-            )}
-          />
+          <span>Brand Colors</span>
+          {openSections.colors ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
 
-        {openSections.brandColors && (
-          <div className="p-4 bg-gray-950 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+        {openSections.colors && (
+          <div style={{ padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Primary
                 </label>
                 <input
                   type="color"
                   value={brandColors.primary}
-                  onChange={(e) =>
-                    onBrandColorChange('primary', e.target.value)
-                  }
-                  className="w-full h-10 rounded cursor-pointer border border-gray-700"
+                  onChange={(e) => onBrandColorChange('primary', e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.07)',
+                    cursor: 'pointer',
+                    padding: '2px',
+                  }}
                 />
               </div>
-              <div
-                className="w-10 h-10 rounded border-2 border-gray-700"
-                style={{ backgroundColor: brandColors.primary }}
-              />
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Secondary
                 </label>
                 <input
                   type="color"
                   value={brandColors.secondary}
-                  onChange={(e) =>
-                    onBrandColorChange('secondary', e.target.value)
-                  }
-                  className="w-full h-10 rounded cursor-pointer border border-gray-700"
+                  onChange={(e) => onBrandColorChange('secondary', e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.07)',
+                    cursor: 'pointer',
+                    padding: '2px',
+                  }}
                 />
               </div>
-              <div
-                className="w-10 h-10 rounded border-2 border-gray-700"
-                style={{ backgroundColor: brandColors.secondary }}
-              />
             </div>
           </div>
         )}
       </div>
 
-      {/* Caption & Hashtags Section */}
-      <div className="border border-gray-700 rounded-lg overflow-hidden">
+      {/* SECTION 4 - Caption & Hashtags */}
+      <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
         <button
-          onClick={() => toggleSection('captionHashtags')}
-          className="w-full flex items-center justify-between p-4 bg-gray-900 hover:bg-gray-800 transition-colors"
+          onClick={() => toggleSection('caption')}
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '14px 16px',
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 600,
+          }}
         >
-          <h3 className="font-semibold text-white">Caption & Hashtags</h3>
-          <ChevronDown
-            className={cn(
-              'w-5 h-5 text-gray-400 transition-transform duration-200',
-              openSections.captionHashtags && 'transform rotate-180'
-            )}
-          />
+          <span>Caption & Hashtags</span>
+          {openSections.caption ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
 
-        {openSections.captionHashtags && (
-          <div className="p-4 bg-gray-950 space-y-4">
+        {openSections.caption && (
+          <div style={{ padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Caption */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-300">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Suggested Caption
                 </label>
                 <button
-                  onClick={() => handleCopy(suggestedCaption, 'caption')}
-                  className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors"
+                  onClick={() => handleCopy(suggestedCaption)}
+                  style={{
+                    fontSize: '11px',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <Copy className="w-3 h-3" />
-                  {copiedSection === 'caption' ? 'Copied!' : 'Copy'}
+                  {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
               <textarea
                 value={suggestedCaption}
                 readOnly
-                rows={3}
-                className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-gray-300 resize-none focus:outline-none"
+                style={{
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  color: 'white',
+                  fontSize: '13px',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                  minHeight: '80px',
+                  resize: 'none',
+                }}
               />
             </div>
 
             {/* Hashtags */}
             {hashtags.length > 0 && (
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-300">
-                    Hashtags
-                  </label>
-                  <button
-                    onClick={() => handleCopy(hashtags.join(' '), 'hashtags')}
-                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors"
-                  >
-                    <Copy className="w-3 h-3" />
-                    {copiedSection === 'hashtags' ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px', display: 'block' }}>
+                  Hashtags
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {hashtags.map((tag, index) => (
-                    <span
+                    <div
                       key={index}
-                      className="px-3 py-1 bg-orange-500/20 text-orange-400 text-xs rounded-full border border-orange-500/50"
+                      style={{
+                        fontSize: '11px',
+                        background: 'rgba(255,107,53,0.15)',
+                        border: '1px solid rgba(255,107,53,0.3)',
+                        color: '#FF6B35',
+                        padding: '4px 10px',
+                        borderRadius: '50px',
+                      }}
                     >
                       {tag}
-                    </span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -303,27 +367,40 @@ export default function EditPanel({
         )}
       </div>
 
-      {/* Tips Section */}
-      <div className="border border-gray-700 rounded-lg overflow-hidden">
+      {/* SECTION 5 - Tips */}
+      <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
         <button
           onClick={() => toggleSection('tips')}
-          className="w-full flex items-center justify-between p-4 bg-gray-900 hover:bg-gray-800 transition-colors"
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '14px 16px',
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 600,
+          }}
         >
-          <h3 className="font-semibold text-white">Tips</h3>
-          <ChevronDown
-            className={cn(
-              'w-5 h-5 text-gray-400 transition-transform duration-200',
-              openSections.tips && 'transform rotate-180'
-            )}
-          />
+          <span>Tips</span>
+          {openSections.tips ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
 
         {openSections.tips && (
-          <div className="p-4 bg-gray-950 space-y-3">
-            {tips.map((tip, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <Lightbulb className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-1" />
-                <p className="text-sm text-gray-400">{tip}</p>
+          <div style={{ padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[
+              'Be specific in your idea for better results',
+              'Carousel works best with 5 slides',
+              'Keep headlines under 8 words',
+            ].map((tip, index) => (
+              <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <Lightbulb size={14} color="#FF6B35" style={{ marginTop: '2px', flexShrink: 0 }} />
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  {tip}
+                </span>
               </div>
             ))}
           </div>
