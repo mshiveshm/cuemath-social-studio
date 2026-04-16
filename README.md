@@ -2,8 +2,6 @@
 
 **Live URL:** https://cuemath-social-studio-nine.vercel.app
 
-**GitHub Repo:** https://github.com/YOUR_USERNAME/cuemath-social-studio
-
 **Built With:** Next.js 14, Google Gemini 2.5 Flash API, Tailwind CSS, Vercel
 
 ---
