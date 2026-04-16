@@ -4,52 +4,190 @@ import { Wand2, Sparkles, Monitor, Download } from 'lucide-react';
 
 export default function WelcomeState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-6 text-center h-full p-8">
-      {/* Icon Container */}
-      <div
-        className="w-20 h-20 rounded-2xl flex items-center justify-center"
-        style={{
-          background: 'linear-gradient(135deg, #FF6B35, #6B4EFF)',
-        }}
-      >
-        <Wand2 className="w-10 h-10 text-white" />
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        padding: '40px',
+        gap: '32px',
+        textAlign: 'center',
+      }}
+    >
+      {/* Section 1 - Icon and Heading */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+        {/* Icon wrapper */}
+        <div
+          style={{
+            width: '72px',
+            height: '72px',
+            borderRadius: '20px',
+            background: 'linear-gradient(135deg, #FF6B35, #6B4EFF)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 32px rgba(255,107,53,0.3)',
+          }}
+        >
+          <Wand2 size={32} color="white" />
+        </div>
+
+        {/* Heading */}
+        <h1
+          style={{
+            fontSize: '32px',
+            fontWeight: '800',
+            color: 'white',
+            margin: 0,
+            lineHeight: '1.2',
+          }}
+        >
+          Turn Ideas Into Creatives
+        </h1>
+
+        {/* Subtext */}
+        <p
+          style={{
+            fontSize: '15px',
+            color: 'rgba(255,255,255,0.45)',
+            margin: 0,
+            maxWidth: '360px',
+            lineHeight: '1.6',
+          }}
+        >
+          Type your content idea on the left and click Generate Creative to get started
+        </p>
       </div>
 
-      {/* Heading */}
-      <h1 className="text-3xl font-bold text-white">Turn Ideas Into Creatives</h1>
-
-      {/* Subtext */}
-      <p className="text-white/50 text-sm max-w-xs">
-        Type your content idea and click Generate Creative to get started
-      </p>
-
-      {/* Feature Cards */}
-      <div className="flex gap-3 mt-2">
+      {/* Section 2 - Feature Cards */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '12px',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
         {/* Card 1 */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center gap-2 w-32">
-          <Sparkles className="w-5 h-5 text-orange-500" />
-          <p className="text-white/70 text-xs text-center">AI Content</p>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px 20px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '16px',
+            width: '120px',
+          }}
+        >
+          <Sparkles size={22} color="#FF6B35" />
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.6)',
+              fontWeight: '500',
+              lineHeight: '1.4',
+              textAlign: 'center',
+            }}
+          >
+            AI Generated Content
+          </div>
         </div>
 
         {/* Card 2 */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center gap-2 w-32">
-          <Monitor className="w-5 h-5 text-orange-500" />
-          <p className="text-white/70 text-xs text-center">3 Formats</p>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px 20px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '16px',
+            width: '120px',
+          }}
+        >
+          <Monitor size={22} color="#FF6B35" />
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.6)',
+              fontWeight: '500',
+              lineHeight: '1.4',
+              textAlign: 'center',
+            }}
+          >
+            3 Format Types
+          </div>
         </div>
 
         {/* Card 3 */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center gap-2 w-32">
-          <Download className="w-5 h-5 text-orange-500" />
-          <p className="text-white/70 text-xs text-center">Export Ready</p>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px 20px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: '16px',
+            width: '120px',
+          }}
+        >
+          <Download size={22} color="#FF6B35" />
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.6)',
+              fontWeight: '500',
+              lineHeight: '1.4',
+              textAlign: 'center',
+            }}
+          >
+            Instant Export
+          </div>
         </div>
       </div>
 
-      {/* Example Idea Box */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-4 max-w-sm mt-2">
-        <p className="text-white/40 text-xs mb-1">Try this idea:</p>
-        <p className="italic text-white/70 text-sm">
+      {/* Section 3 - Example Idea Box */}
+      <div
+        style={{
+          background: 'rgba(255,107,53,0.06)',
+          border: '1px solid rgba(255,107,53,0.15)',
+          borderRadius: '16px',
+          padding: '16px 24px',
+          maxWidth: '420px',
+          width: '100%',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '11px',
+            color: 'rgba(255,255,255,0.35)',
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            marginBottom: '8px',
+          }}
+        >
+          Try this idea:
+        </div>
+        <div
+          style={{
+            fontSize: '14px',
+            color: 'rgba(255,255,255,0.7)',
+            fontStyle: 'italic',
+            lineHeight: '1.5',
+          }}
+        >
           Carousel for parents about why kids forget what they learn
-        </p>
+        </div>
       </div>
     </div>
   );
